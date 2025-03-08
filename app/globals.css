@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+@theme inline {
+  --font-sans: var(--font-sans);
+}
+
+@theme {
+  --color-*: initial;
+  --color-white: #FEFCFF;
+  --color-black: #000000;
+  --color-transparent: transparent;
+  --color-darkblue: #090A12;
+}
+
+body {
+  background: #090A12;
+  color: var(--color-white);
+  font-family: var(--font-sans);
+}
+
+
+button {
+  pointer-events: all;
+}
+
+a {
+  pointer-events: all;
+}
