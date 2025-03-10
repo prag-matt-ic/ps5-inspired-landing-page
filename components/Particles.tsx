@@ -92,10 +92,11 @@ const Particles: FC = () => {
       const t = float(instanceIndex).mul(xSpacing)
 
       const noiseInputA = hash(instanceIndex.toVar().mul(10))
-      const noiseInputB = hash(seed.mul(20).add(1))
+      const noiseInputB = hash(seed.add(1).mul(20))
       const noiseA = mx_noise_float(noiseInputA).toVar()
       const noiseB = mx_noise_float(noiseInputB).toVar()
 
+      // Create a wave pattern
       const x = t.sub(noiseA).sub(xOffset)
       const y = sin(t.div(2)).mul(2.2).add(s).sub(noiseB)
       const z = hash(instanceIndex)
@@ -104,9 +105,21 @@ const Particles: FC = () => {
         .add(noiseB.mul(2))
       const wavePos = vec3(x, y, z).toVar()
 
-      const shouldOffsetY = seed.lessThan(0.35)
+      // Offset a selection of particles along the Y axis
+      const shouldOffsetY = seed.lessThan(0.3)
       const offsetPos = vec3(0.0, noiseA.sub(noiseB).mul(24), 0.0).add(wavePos)
-      const finalPos = select(shouldOffsetY, offsetPos, wavePos).toVar()
+
+      // Completely randomize the position of some particles within a box
+      const shouldRandomlyPlace = seed.greaterThan(0.6).and(seed.lessThan(0.7))
+      const randomPos = vec3(
+        hash(instanceIndex.sub(1))
+          .mul(waveLength)
+          .sub(waveLength / 2),
+        noiseInputA.mul(2).sub(1).mul(10),
+        hash(seed.add(instanceIndex)).mul(2).sub(1).mul(zRange),
+      )
+
+      const finalPos = select(shouldOffsetY, offsetPos, select(shouldRandomlyPlace, randomPos, wavePos)).toVar()
 
       finalPosition.assign(finalPos)
 
@@ -268,8 +281,8 @@ const Particles: FC = () => {
     <instancedMesh
       args={[undefined, undefined, PARTICLE_COUT]}
       frustumCulled={false}
-      position={[0, -2, 0]}
-      rotation={[0, 0.2, Math.PI / 12]}>
+      position={[0, -2.5, 0]}
+      rotation={[0, 0.3, Math.PI / 12]}>
       <planeGeometry args={[0.1, 0.1]} />
       <spriteNodeMaterial
         key={key}

@@ -28,7 +28,7 @@ const Lighting: FC = () => {
 
   useGSAP(
     () => {
-      const targetIntensity = stage === Stage.RESTART ? 0 : 16
+      const targetIntensity = stage === Stage.RESTART ? 0 : 18
       if (lightIntensity.current.value === targetIntensity) return
       gsap.to(lightIntensity.current, {
         value: targetIntensity,
