@@ -5,14 +5,14 @@ import gsap from 'gsap'
 import React, { type FC, useEffect, useRef } from 'react'
 import { DirectionalLight, Object3D } from 'three/webgpu'
 
-import usePS5Store, { Stage } from '@/hooks/usePS5Store'
+import useStageStore, { Stage } from '@/hooks/useStageStore'
 
 const Lighting: FC = () => {
   const scene = useThree((s) => s.scene)
   const light = useRef<DirectionalLight>(null)
 
   const lightIntensity = useRef({ value: 0 })
-  const stage = usePS5Store((s) => s.stage)
+  const stage = useStageStore((s) => s.stage)
 
   useEffect(() => {
     const setupLight = () => {
@@ -28,12 +28,12 @@ const Lighting: FC = () => {
 
   useGSAP(
     () => {
-      const targetIntensity = stage === Stage.RESTART ? 0 : 18
-      if (lightIntensity.current.value === targetIntensity) return
+      const intensity = stage === Stage.PREFERENCES ? 0 : 18
+      if (lightIntensity.current.value === intensity) return
       gsap.to(lightIntensity.current, {
-        value: targetIntensity,
-        duration: 2,
-        ease: 'power2.inOut',
+        value: intensity,
+        duration: stage === Stage.PREFERENCES ? 0.4 : 2,
+        ease: 'power2.in',
         onUpdate: () => {
           if (!light.current) return
           light.current.intensity = lightIntensity.current.value

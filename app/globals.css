@@ -21,8 +21,10 @@ body {
 
 button {
   pointer-events: all;
+  cursor: pointer;
 }
 
 a {
   pointer-events: all;
+  cursor: pointer;
 }

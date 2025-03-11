@@ -4,38 +4,62 @@ import { useGSAP } from '@gsap/react'
 import gsap from 'gsap'
 import SplitText from 'gsap/dist/SplitText'
 import Image, { type StaticImageData } from 'next/image'
-import React, { type FC, useRef, useState } from 'react'
+import React, { type FC, useEffect, useRef, useState } from 'react'
 import { SwitchTransition, Transition, TransitionStatus } from 'react-transition-group'
 
 import arrowOutIcon from '@/assets/arrow-out.svg'
 import avatarImg from '@/assets/avatar.jpg'
+import mutedIcon from '@/assets/muted.svg'
 import optionsIcon from '@/assets/options.svg'
 import brandIcon from '@/assets/p-brand.svg'
+import playIcon from '@/assets/play.svg'
 import restartIcon from '@/assets/restart.svg'
-// import blogIcon from '@/assets/socials/article.svg'
 import instagramIcon from '@/assets/socials/instagram.svg'
 import linkedinIcon from '@/assets/socials/linkedin.svg'
 import mailIcon from '@/assets/socials/mail.svg'
 import youtubeIcon from '@/assets/socials/youtube.svg'
-import usePS5Store, { Stage } from '@/hooks/usePS5Store'
+import useAudio from '@/hooks/useAudio'
+import useAudioStore from '@/hooks/useAudioStore'
+import useStageStore, { Stage } from '@/hooks/useStageStore'
 
 // Register plugins
 gsap.registerPlugin(useGSAP, SplitText)
 
 const UI: FC = () => {
-  const stage = usePS5Store((s) => s.stage)
+  const stage = useStageStore((s) => s.stage)
   const wrapper = useRef<HTMLDivElement>(null)
+
+  // Load all the sounds
+  const { playAudio: playBackgroundAudio } = useAudio({
+    src: '/sounds/background.aac',
+    loop: true,
+    volume: 0.4,
+  })
+  const { playAudio: playLogoAudio } = useAudio({ src: '/sounds/logo-reveal.aac', loop: false })
+  const { playAudio: playButtonAudio } = useAudio({ src: '/sounds/button.aac', loop: false })
+
+  useEffect(() => {
+    if (stage === Stage.ENTER) playBackgroundAudio()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stage])
 
   return (
     <SwitchTransition mode="in-out">
-      <Transition key={stage} timeout={{ enter: 0, exit: 800 }} nodeRef={wrapper}>
+      <Transition key={stage} timeout={{ enter: 0, exit: 800 }} nodeRef={wrapper} appear={true}>
         {(transitionStatus) => {
           return (
             <div
               ref={wrapper}
               className="pointer-events-none fixed inset-0 flex items-center justify-center select-none">
-              {stage === Stage.BRAND && <PulsingBrand transitionStatus={transitionStatus} />}
-              {stage === Stage.AVATAR && <Avatars transitionStatus={transitionStatus} />}
+              {stage === Stage.PREFERENCES && <Preferences transitionStatus={transitionStatus} />}
+              {stage === Stage.LOGO && (
+                <Logo
+                  transitionStatus={transitionStatus}
+                  playLogoAudio={playLogoAudio}
+                  playButtonAudio={playButtonAudio}
+                />
+              )}
+              {stage === Stage.AVATAR && <Avatar transitionStatus={transitionStatus} />}
             </div>
           )
         }}
@@ -46,14 +70,66 @@ const UI: FC = () => {
 
 export default UI
 
-type Props = {
+type PreferencesProps = {
   transitionStatus: TransitionStatus
 }
 
-const PulsingBrand: FC<Props> = ({ transitionStatus }) => {
-  const setStage = usePS5Store((s) => s.setStage)
+const Preferences: FC<PreferencesProps> = ({ transitionStatus }) => {
+  const setStage = useStageStore((s) => s.setStage)
+  const setIsMuted = useAudioStore((s) => s.setIsMuted)
+
+  const container = useRef<HTMLDivElement>(null)
+
+  useGSAP(
+    () => {
+      if (transitionStatus === 'entered') {
+        gsap.to(container.current, { opacity: 1, duration: 1 })
+      }
+      if (transitionStatus === 'exiting') {
+        gsap.to(container.current, { opacity: 0, duration: 0.3 })
+      }
+    },
+    { dependencies: [transitionStatus], scope: container },
+  )
+
+  const onEnterClick = (isMuted: boolean) => {
+    setIsMuted(isMuted)
+    setStage(Stage.ENTER)
+  }
+
+  return (
+    <section ref={container} className="flex flex-col items-center justify-center gap-8 opacity-0">
+      <button
+        className="flex items-center gap-3 text-xl font-medium transition-opacity duration-200 hover:opacity-70"
+        onClick={() => onEnterClick(false)}>
+        <Image src={playIcon} alt="play" className="size-8" />
+        Full experience
+      </button>
+      <button
+        className="flex items-center gap-3 text-sm text-white/60 transition-opacity duration-200 hover:opacity-70"
+        onClick={() => onEnterClick(true)}>
+        <Image src={mutedIcon} alt="mute" className="size-5" />
+        Muted experience
+      </button>
+    </section>
+  )
+}
+
+type LogoProps = {
+  transitionStatus: TransitionStatus
+  playLogoAudio: () => void
+  playButtonAudio: () => void
+}
+
+const Logo: FC<LogoProps & {}> = ({ transitionStatus, playLogoAudio, playButtonAudio }) => {
+  const setStage = useStageStore((s) => s.setStage)
   const circleTweens = useRef<gsap.core.Tween[]>([])
   const container = useRef<HTMLDivElement>(null)
+
+  const onStartPress = () => {
+    playButtonAudio()
+    setStage(Stage.AVATAR)
+  }
 
   useGSAP(
     () => {
@@ -69,18 +145,19 @@ const PulsingBrand: FC<Props> = ({ transitionStatus }) => {
                 '75%': { opacity: 1, scale: 1.75, ease: 'none' },
                 '100%': { opacity: 0, scale: 2, ease: 'none' },
               },
-              duration: 1.5,
+              duration: 2,
               repeat: -1,
-              repeatDelay: 0.5,
-              delay: index / 1.5,
+              repeatDelay: 0.25,
+              delay: index * 0.75,
             })
           })
         }
         // Fade in the container and then start the circle animations
+        playLogoAudio()
         gsap.fromTo(
           container.current,
           { opacity: 0, scale: 0.6 },
-          { opacity: 1, duration: 0.5, scale: 1, delay: 1, ease: 'power1.in', onComplete: animateCircles },
+          { opacity: 1, duration: 0.5, scale: 1, delay: 0.5, ease: 'power1.in', onComplete: animateCircles },
         )
       }
       if (transitionStatus === 'exiting') {
@@ -114,9 +191,9 @@ const PulsingBrand: FC<Props> = ({ transitionStatus }) => {
       ))}
       <button
         id="brand-button"
-        className="relative flex cursor-pointer items-center justify-center transition-transform duration-300 ease-in-out hover:scale-120"
+        className="relative flex items-center justify-center transition-transform duration-300 ease-in-out hover:scale-120"
         aria-label="Press to start"
-        onClick={() => setStage(Stage.AVATAR)}>
+        onClick={onStartPress}>
         <Image src={brandIcon} alt="Pragmattic" className="size-24" />
       </button>
 
@@ -125,8 +202,12 @@ const PulsingBrand: FC<Props> = ({ transitionStatus }) => {
   )
 }
 
-const Avatars: FC<Props> = ({ transitionStatus }) => {
-  const setStage = usePS5Store((s) => s.setStage)
+type AvatarProps = {
+  transitionStatus: TransitionStatus
+}
+
+const Avatar: FC<AvatarProps> = ({ transitionStatus }) => {
+  const setStage = useStageStore((s) => s.setStage)
   const container = useRef<HTMLDivElement>(null)
 
   useGSAP(
@@ -225,7 +306,7 @@ const Avatars: FC<Props> = ({ transitionStatus }) => {
   })
 
   const onRestartPress = () => {
-    setStage(Stage.RESTART)
+    setStage(Stage.PREFERENCES)
   }
 
   return (
@@ -247,7 +328,7 @@ const Avatars: FC<Props> = ({ transitionStatus }) => {
           href={CODE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex size-24 cursor-pointer items-center justify-center place-self-center rounded-full bg-white/10 transition-colors hover:bg-white/20 sm:size-48">
+          className="group flex size-24 items-center justify-center place-self-center rounded-full bg-white/10 transition-colors hover:bg-white/20 sm:size-48">
           <Image
             src={arrowOutIcon}
             alt="add"
@@ -280,7 +361,7 @@ const Avatars: FC<Props> = ({ transitionStatus }) => {
             <button
               ref={refs.setReference}
               {...getReferenceProps()}
-              className="group mx-auto flex cursor-pointer items-center gap-2 p-1 select-none">
+              className="group mx-auto flex items-center gap-2 p-1 select-none">
               <Image src={optionsIcon} alt="options" className="h-5 w-fit" />
               <span className="text-left text-sm text-white/80 group-hover:text-white">Options</span>
             </button>
@@ -309,9 +390,7 @@ const Avatars: FC<Props> = ({ transitionStatus }) => {
             </Transition>
           </div>
 
-          <button
-            className="cursor-pointer rounded-full bg-white/10 p-3 align-bottom hover:bg-white/20"
-            onClick={onRestartPress}>
+          <button className="rounded-full bg-white/10 p-3 align-bottom hover:bg-white/20" onClick={onRestartPress}>
             <Image src={restartIcon} alt="plus" className="size-8" />
           </button>
         </div>

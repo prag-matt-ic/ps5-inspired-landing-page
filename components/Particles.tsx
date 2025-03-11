@@ -30,7 +30,8 @@ import {
 } from 'three/tsl'
 import { AdditiveBlending, WebGPURenderer } from 'three/webgpu'
 
-import usePS5Store, { Stage } from '@/hooks/usePS5Store'
+import useAudio from '@/hooks/useAudio'
+import useStageStore, { Stage } from '@/hooks/useStageStore'
 
 // Work on re-creating the PS5 Loading screen: https://www.youtube.com/watch?v=bMxgJbCgPQQ
 
@@ -58,9 +59,9 @@ const PARTICLE_COUT = Math.pow(56, 2)
 
 const Particles: FC = () => {
   const renderer = useThree((s) => s.gl) as unknown as WebGPURenderer
-
-  const stage = usePS5Store((s) => s.stage)
-  const setStage = usePS5Store((s) => s.setStage)
+  const stage = useStageStore((s) => s.stage)
+  const setStage = useStageStore((s) => s.setStage)
+  const { playAudio: playWhoosh } = useAudio({ src: '/sounds/whoosh.aac', loop: false })
 
   const { key, positionNode, colorNode, scaleNode, opacityNode, updatePositions, uEnterValue } = useMemo(() => {
     // Create storage buffers for seeds and positions
@@ -105,11 +106,11 @@ const Particles: FC = () => {
         .add(noiseB.mul(2))
       const wavePos = vec3(x, y, z).toVar()
 
-      // Offset a selection of particles along the Y axis
+      // Offset a selection of wave particles along the Y axis
       const shouldOffsetY = seed.lessThan(0.3)
       const offsetPos = vec3(0.0, noiseA.sub(noiseB).mul(24), 0.0).add(wavePos)
 
-      // Completely randomize the position of some particles within a box
+      // Randomize the position of some particles within a box
       const shouldRandomlyPlace = seed.greaterThan(0.6).and(seed.lessThan(0.7))
       const randomPos = vec3(
         hash(instanceIndex.sub(1))
@@ -120,15 +121,14 @@ const Particles: FC = () => {
       )
 
       const finalPos = select(shouldOffsetY, offsetPos, select(shouldRandomlyPlace, randomPos, wavePos)).toVar()
-
       finalPosition.assign(finalPos)
 
       // Compute initial position based on the final position
       const initialPosition = initialPositionBuffer.element(instanceIndex)
-      const initialPos = finalPos.add(vec3(s.mul(6), s.mul(8), seed.mul(16)))
+      const initialPos = finalPos.add(vec3(s.mul(6), seed.mul(8), seed.mul(32)))
       initialPosition.assign(initialPos)
 
-      // Initialize the current position to the initial position
+      // Initialize current position to the initial position
       const currentPosition = currentPositionBuffer.element(instanceIndex)
       currentPosition.assign(initialPos)
     })().compute(PARTICLE_COUT)
@@ -166,7 +166,7 @@ const Particles: FC = () => {
       const seed = seedBuffer.element(instanceIndex)
       const offset = hash(seed)
       // Create a flickering effect by cycling the particles' opacity
-      const period = float(mix(1.0, 8.0, seed))
+      const period = float(mix(1.0, 10.0, seed))
       const tCycle = float(mod(time.add(offset.mul(period)), period))
       const flickerDuration = period.mul(0.3)
       const flickerIn = smoothstep(0.0, flickerDuration, tCycle)
@@ -179,7 +179,7 @@ const Particles: FC = () => {
       const distanceOpacity = select(
         posZ.lessThan(1.0),
         smoothstep(-zRange / 2, 1.0, posZ).oneMinus(),
-        select(posZ.greaterThan(1.0), smoothstep(1.0, 7.0, posZ), 0.0),
+        select(posZ.greaterThan(1.0), smoothstep(1.0, 10.0, posZ), 0.0),
       ).oneMinus()
 
       const finalOpacity = flickerAlpha.mul(enterOpacity).mul(distanceOpacity)
@@ -213,15 +213,16 @@ const Particles: FC = () => {
 
       const t = time.mul(0.3)
 
-      // Animate the final position so the particles float around.
+      // Animate the final position to make the particles float around
       const s = seed.mul(2.0).sub(1) // convert seed to a value between -1 and 1
       const velX = mx_noise_float(t).mul(s).mul(0.01)
       const velY = sin(s.add(t)).mul(0.006)
-      const velZ = mx_noise_float(finalPosition.add(1)).mul(0.01)
+      const velZ = mx_noise_float(currentPosition.add(1)).mul(0.01)
       finalPosition.addAssign(vec3(velX, velY, velZ))
+      initialPosition.addAssign(vec3(velX, velY, velZ))
 
-      // Compute the base position as a straight-line interpolation from initial to final
-      const position = mix(initialPosition, finalPosition, uEnterValue)
+      // Move from initial to final position during enter transition
+      const position = mix(initialPosition, finalPosition, uEnterValue).toVar()
 
       // Set the current position to the base position plus the noise offset.
       currentPosition.assign(position)
@@ -244,10 +245,13 @@ const Particles: FC = () => {
       gsap.to(uEnterValue, {
         value: 1.0,
         duration: 2.6,
-        delay: 0.2,
+        delay: 0.1,
         ease: 'power2.inOut',
+        onStart: () => {
+          playWhoosh()
+        },
         onComplete: () => {
-          setStage(Stage.BRAND)
+          setStage(Stage.LOGO)
         },
       })
     },
@@ -258,14 +262,11 @@ const Particles: FC = () => {
 
   useGSAP(
     () => {
-      if (stage !== Stage.RESTART) return
+      if (stage !== Stage.PREFERENCES) return
       gsap.to(uEnterValue, {
         value: 0.0,
         duration: 1,
         ease: 'power2.inOut',
-        onComplete: () => {
-          setStage(Stage.ENTER)
-        },
       })
     },
     {
