@@ -243,10 +243,9 @@ const Particles: FC = () => {
       gsap.to(uEnterValue, {
         value: 1.0,
         duration: 2.5,
-        delay: 0.1,
         ease: 'power3.inOut',
         onStart: () => {
-          playWhoosh()
+          setTimeout(playWhoosh, 500)
         },
         onComplete: () => {
           setStage(Stage.LOGO)
