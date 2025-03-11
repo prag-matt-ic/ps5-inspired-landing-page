@@ -33,12 +33,10 @@ import { AdditiveBlending, WebGPURenderer } from 'three/webgpu'
 import useAudio from '@/hooks/useAudio'
 import useStageStore, { Stage } from '@/hooks/useStageStore'
 
-// Work on re-creating the PS5 Loading screen: https://www.youtube.com/watch?v=bMxgJbCgPQQ
-
-const COLOUR_COUNT = 100
-
 // Generate color palette
 // https://www.npmjs.com/package/@thi.ng/color
+
+const COLOUR_COUNT = 100
 
 const PALETTE = [
   ...colorsFromRange('soft', {
@@ -55,7 +53,7 @@ const PALETTE = [
 
 const colors = array(PALETTE.map((c) => color(css(c))))
 
-const PARTICLE_COUT = Math.pow(56, 2)
+const PARTICLE_COUNT = Math.pow(56, 2)
 
 const Particles: FC = () => {
   const renderer = useThree((s) => s.gl) as unknown as WebGPURenderer
@@ -65,14 +63,14 @@ const Particles: FC = () => {
 
   const { key, positionNode, colorNode, scaleNode, opacityNode, updatePositions, uEnterValue } = useMemo(() => {
     // Create storage buffers for seeds and positions
-    const seeds = new Float32Array(PARTICLE_COUT)
-    for (let i = 0; i < PARTICLE_COUT; i++) {
+    const seeds = new Float32Array(PARTICLE_COUNT)
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
       seeds[i] = Math.random()
     }
 
     // Initialize particle positions (scattered across a box)
     const xSpacing = 0.01
-    const waveLength = PARTICLE_COUT * xSpacing
+    const waveLength = PARTICLE_COUNT * xSpacing
     const xOffset = waveLength / 2
     const zRange = 12
 
@@ -80,10 +78,10 @@ const Particles: FC = () => {
     const uEnterValue = uniform(float(0.0))
 
     const seedBuffer = instancedArray(seeds, 'float')
-    const initialPositionBuffer = instancedArray(PARTICLE_COUT, 'vec3')
-    const finalPositionBuffer = instancedArray(PARTICLE_COUT, 'vec3')
-    const currentPositionBuffer = instancedArray(PARTICLE_COUT, 'vec3')
-    const colorBuffer = instancedArray(PARTICLE_COUT, 'vec3')
+    const initialPositionBuffer = instancedArray(PARTICLE_COUNT, 'vec3')
+    const finalPositionBuffer = instancedArray(PARTICLE_COUNT, 'vec3')
+    const currentPositionBuffer = instancedArray(PARTICLE_COUNT, 'vec3')
+    const colorBuffer = instancedArray(PARTICLE_COUNT, 'vec3')
 
     const computePositions = Fn(() => {
       const seed = seedBuffer.element(instanceIndex)
@@ -125,13 +123,13 @@ const Particles: FC = () => {
 
       // Compute initial position based on the final position
       const initialPosition = initialPositionBuffer.element(instanceIndex)
-      const initialPos = finalPos.add(vec3(s.mul(6), seed.mul(8), seed.mul(32)))
+      const initialPos = finalPos.add(vec3(s.mul(8), s.mul(6).add(noiseA), seed.mul(32)))
       initialPosition.assign(initialPos)
 
       // Initialize current position to the initial position
       const currentPosition = currentPositionBuffer.element(instanceIndex)
       currentPosition.assign(initialPos)
-    })().compute(PARTICLE_COUT)
+    })().compute(PARTICLE_COUNT)
 
     const computeColor = Fn(() => {
       const seed = seedBuffer.element(instanceIndex)
@@ -139,7 +137,7 @@ const Particles: FC = () => {
       const colorIndex = hash(instanceIndex.add(3)).mul(COLOUR_COUNT).floor()
       const randomColor = select(seed.greaterThan(0.99), color('#D7D5D1'), colors.element(colorIndex))
       c.assign(randomColor)
-    })().compute(PARTICLE_COUT)
+    })().compute(PARTICLE_COUNT)
 
     renderer.computeAsync([computeColor, computePositions])
 
@@ -226,7 +224,7 @@ const Particles: FC = () => {
 
       // Set the current position to the base position plus the noise offset.
       currentPosition.assign(position)
-    })().compute(PARTICLE_COUT)
+    })().compute(PARTICLE_COUNT)
 
     return {
       key,
@@ -280,7 +278,7 @@ const Particles: FC = () => {
 
   return (
     <instancedMesh
-      args={[undefined, undefined, PARTICLE_COUT]}
+      args={[undefined, undefined, PARTICLE_COUNT]}
       frustumCulled={false}
       position={[0, -2.5, 0]}
       rotation={[0, 0.3, Math.PI / 12]}>
