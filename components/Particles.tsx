@@ -242,9 +242,9 @@ const Particles: FC = () => {
       if (stage !== Stage.ENTER) return
       gsap.to(uEnterValue, {
         value: 1.0,
-        duration: 2.6,
+        duration: 2.5,
         delay: 0.1,
-        ease: 'power2.inOut',
+        ease: 'power3.inOut',
         onStart: () => {
           playWhoosh()
         },
