@@ -6,7 +6,6 @@ export enum Stage {
   ENTER = 'enter',
   LOGO = 'logo',
   AVATAR = 'avatar',
-  RESTART = 'restart',
 }
 
 type Store = {
@@ -14,7 +13,7 @@ type Store = {
   setStage: (stage: Stage) => void
 }
 
-const useStageStore = create<Store>((set, get) => ({
+const useStageStore = create<Store>((set) => ({
   stage: Stage.PREFERENCES,
   setStage: (stage) => set({ stage }),
 }))

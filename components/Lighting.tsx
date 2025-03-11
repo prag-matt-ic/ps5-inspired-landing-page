@@ -15,15 +15,14 @@ const Lighting: FC = () => {
   const stage = useStageStore((s) => s.stage)
 
   useEffect(() => {
-    const setupLight = () => {
+    const setupLightTarget = () => {
       if (!scene || !light.current) return
       const targetObject = new Object3D()
       targetObject.position.set(24, -4, 2)
       scene.add(targetObject)
       light.current.target = targetObject
     }
-
-    setupLight()
+    setupLightTarget()
   }, [scene])
 
   useGSAP(
