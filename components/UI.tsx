@@ -98,7 +98,7 @@ const Preferences: FC<PreferencesProps> = ({ transitionStatus }) => {
   }
 
   return (
-    <section ref={container} className="flex flex-col items-center justify-center gap-8 opacity-0">
+    <section ref={container} className="absolute flex flex-col items-center justify-center gap-8 opacity-0">
       <button
         className="flex items-center gap-3 text-xl font-medium transition-opacity duration-200 hover:opacity-70"
         onClick={() => onEnterClick(false)}>
