@@ -185,7 +185,7 @@ const Logo: FC<LogoProps & {}> = ({ transitionStatus, playLogoAudio, playButtonA
           key={index}
           className="circle-pulse absolute aspect-square size-24 rounded-full border-2 border-white opacity-0"
           style={{
-            boxShadow: '0 0 6px 2px rgba(255, 255, 255, 0.25), inset 0 0 6px 2px rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 0 6px 2px rgba(255, 255, 255, 0.33), inset 0 0 6px 2px rgba(255, 255, 255, 0.33)',
           }}
         />
       ))}
@@ -281,7 +281,6 @@ const Avatar: FC<AvatarProps> = ({ transitionStatus }) => {
   )
 
   // Contact menu logic
-
   const { contextSafe } = useGSAP({ scope: container })
   const [showContactMenu, setShowContactMenu] = useState(false)
 
@@ -344,7 +343,7 @@ const Avatar: FC<AvatarProps> = ({ transitionStatus }) => {
           id="avatar-circle"
           className="aspect-square size-56 place-self-center rounded-full border-2 border-white p-2.5 opacity-0 sm:size-72"
           style={{
-            boxShadow: '0 0 6px 2px rgba(255, 255, 255, 0.25), inset 0 0 6px 2px rgba(255, 255, 255, 0.2)',
+            boxShadow: '0 0 6px 2px rgba(255, 255, 255, 0.33), inset 0 0 6px 2px rgba(255, 255, 255, 0.33)',
           }}>
           <Image
             src={avatarImg}

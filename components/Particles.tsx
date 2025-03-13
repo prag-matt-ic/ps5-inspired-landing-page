@@ -209,9 +209,8 @@ const Particles: FC = () => {
       const finalPosition = finalPositionBuffer.element(instanceIndex)
       const currentPosition = currentPositionBuffer.element(instanceIndex)
 
-      const t = time.mul(0.3)
-
       // Animate the final position to make the particles float around
+      const t = time.mul(0.3)
       const s = seed.mul(2.0).sub(1) // convert seed to a value between -1 and 1
       const velX = mx_noise_float(t).mul(s).mul(0.01)
       const velY = sin(s.add(t)).mul(0.006)
