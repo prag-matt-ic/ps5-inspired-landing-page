@@ -1,6 +1,6 @@
 'use client'
 import { useGSAP } from '@gsap/react'
-import { OrbitControls, Stats } from '@react-three/drei'
+import { Stats } from '@react-three/drei'
 import { Canvas, extend, type ThreeToJSXElements } from '@react-three/fiber'
 import gsap from 'gsap'
 import { SplitText } from 'gsap/dist/SplitText'
@@ -34,7 +34,7 @@ const Scene: FC = () => {
 
   if (isWebGPUSupported === false) {
     return (
-      <section className="flex h-svh flex-col items-center justify-center space-y-4 p-8 text-center">
+      <section className="bg-darkblue !fixed inset-0 z-50 flex h-svh flex-col items-center justify-center space-y-4 p-8 text-center">
         <h2 className="text-2xl font-medium tracking-tight">Not supported by this browser</h2>
         <p className="leading-loose text-white/80">
           This experiences uses an experimental technology (WebGPU).
@@ -59,7 +59,6 @@ const Scene: FC = () => {
       <Lighting />
       <Backdrop />
       <Particles />
-      {/* <OrbitControls /> */}
       <CameraControls />
       {process.env.NODE_ENV === 'development' && <Stats />}
     </Canvas>
