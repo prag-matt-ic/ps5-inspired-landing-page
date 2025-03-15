@@ -410,4 +410,4 @@ const SOCIALS: {
   // { icon: blogIcon, alt: 'Blog', href: 'https://blog.pragmattic.dev' },
 ] as const
 
-const CODE_URL = 'https://github.com/prag-matt-ic/pragmattic-ps5'
+const CODE_URL = 'https://github.com/prag-matt-ic/ps5-inspired-landing-page'
