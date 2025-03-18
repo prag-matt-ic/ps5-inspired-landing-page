@@ -12,3 +12,5 @@ It makes use of the WebGPU API for GPU compute shaders.
 ![landing](https://github.com/prag-matt-ic/pragmattic-ps5/blob/main/public/landing.png?raw=true)
 
 ![landing UI](https://github.com/prag-matt-ic/pragmattic-ps5/blob/main/public/landing-ui.png?raw=true)
+
+Feel free to explore, experiment, and share your feedback!
