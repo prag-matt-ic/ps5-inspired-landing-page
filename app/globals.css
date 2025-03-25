@@ -17,8 +17,6 @@ body {
   font-family: var(--font-sans);
 }
 
-
-
 button {
   pointer-events: all;
   cursor: pointer;

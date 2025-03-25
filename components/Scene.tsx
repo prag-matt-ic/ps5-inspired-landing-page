@@ -40,7 +40,14 @@ const Scene: FC = () => {
         <p className="leading-loose text-white/80">
           This experiences uses an experimental technology (WebGPU).
           <br />
-          Please open it using a desktop version of Chrome/Edge.
+          Please open it using a{' '}
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://developer.mozilla.org/en-US/docs/Web/API/WebGPU_API#browser_compatibility">
+            compatible browser
+          </a>
+          .
         </p>
       </section>
     )
